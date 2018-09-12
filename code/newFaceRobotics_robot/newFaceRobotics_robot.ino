@@ -1,5 +1,11 @@
 /* esp-wroom-2に書き込むコード
     オムニホイール４個(正転逆転)　ギヤボックス１個(正転のみ)　サーボ(２値のみ)　
+          B
+  A〇ー　〇
+   　　　｜
+   |
+   〇　－〇C
+   D
 */
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
@@ -30,7 +36,6 @@ const uint8_t omniPin_C2 = 13;
 
 const uint8_t omniPin_D1 = 13;
 const uint8_t omniPin_D2 = 15;
-
 
 boolean motorDirection = false;
 
@@ -70,17 +75,32 @@ void receiveWiFi() {
   UDP.read(WiFibuffer, 1);
   Serial.write(WiFibuffer[0]);
   UDP.flush();
+
 }
 
-void driveOmni(float x , float y) {
+void omniDrive(uint16_t velocity_x , uint16_t velocity_y) {//velosity_x, velosity_yで -1024～1024の範囲のx方向, y方向それぞれの速度を指定
 
+  motorControl('A', velocity_y);
+  motorControl('C', velocity_y);
+
+  motorControl('B', velocity_x);
+  motorControl('D', velocity_x);
+}
+
+void omniTurn(uint16_t velocity_turn) {
+  //velosity_turnで-1024～1024の範囲の速度を指定
+  //velosity_turnが正の値の時，右旋回．負の値のとき，左旋回
+  motorControl('A', velocity_turn);
+  motorControl('C', velocity_turn);
+  motorControl('B', velocity_turn);
+  motorControl('D', velocity_turn);
 }
 
 void motorControl(char omniName, int velocity) {
-  //omniNameでA,B,C,Dのどのオムニのモーターかを，velosityで-255～255の範囲の速度を指定
+  //omniNameでA,B,C,Dのどのオムニのモーターかを，velosityで-1024～1024の範囲の速度を指定
   uint8_t HbridgeR = 255;
   uint8_t HbridgeL = 255;
-  uint8_t pwm  = abs(velocity);
+  uint16_t pwm  = abs(velocity);
   boolean minus =  (velocity < 0) ? true : false;
 
   //minus =  !minus;をコメントアウトすることで各モーターの回転方向を反転させる
@@ -123,4 +143,3 @@ void motorControl(char omniName, int velocity) {
   }
   motorDirection = minus;
 }
-
