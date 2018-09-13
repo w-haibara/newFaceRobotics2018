@@ -13,8 +13,8 @@
 #include <Servo.h>
 
 IPAddress myIP(192, 168, 4, 1);
-const char *ssid = "AoD_ESP_001";
-const char *password = "AoDESP001";
+const char *ssid = "AoD_ESP_999";
+const char *password = "AoDESP999";
 
 WiFiUDP UDP;
 
@@ -66,6 +66,8 @@ void setup() {
 }
 
 void loop() {
+  delay(10);//WiFiの通信に余裕を持たせるためのdelay
+
   byte  button_drive = 0;
   byte  button_servo = 0;
   byte  button_gearbox = 0;
