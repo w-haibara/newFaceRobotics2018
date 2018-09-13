@@ -16,7 +16,6 @@ IPAddress myIP(192, 168, 4, 1);
 const char *ssid = "AoD_ESP_001";
 const char *password = "AoDESP001";
 
-byte WiFibuffer[1];
 WiFiUDP UDP;
 
 Servo servo;
@@ -37,6 +36,8 @@ const uint8_t omniPin_C2 = 13;
 const uint8_t omniPin_D1 = 13;
 const uint8_t omniPin_D2 = 15;
 
+const uint8_t relayPin = 16;
+
 boolean motorDirection = false;
 
 void setup() {
@@ -49,7 +50,6 @@ void setup() {
 
   servo.attach(servoPin);
 
-  pinMode(servoPin, OUTPUT);
   pinMode(gearboxPin, OUTPUT);
 
   pinMode(omniPin_A1, OUTPUT);
@@ -66,80 +66,177 @@ void setup() {
 }
 
 void loop() {
-  if (UDP.parsePacket() > 0) {
-    receiveWiFi();
-  }
-}
+  byte  button_drive = 0;
+  byte  button_servo = 0;
+  byte  button_gearbox = 0;
+  uint8_t buttonNum = 0;
 
-void receiveWiFi() {
-  UDP.read(WiFibuffer, 1);
-  Serial.write(WiFibuffer[0]);
-  UDP.flush();
+  const uint8_t pwm_turn = 500;
+  const uint8_t pwm_drive = 500;
 
-}
+  const uint8_t servo_start = 0;
 
-void omniDrive(uint16_t velocity_x , uint16_t velocity_y) {//velosity_x, velosity_yで -1024～1024の範囲のx方向, y方向それぞれの速度を指定
+  const uint8_t servo_end = 90;
 
-  motorControl('A', velocity_y);
-  motorControl('C', velocity_y);
+  readWiFibuffer(&button_drive, &button_servo, &button_gearbox);
 
-  motorControl('B', velocity_x);
-  motorControl('D', velocity_x);
-}
-
-void omniTurn(uint16_t velocity_turn) {
-  //velosity_turnで-1024～1024の範囲の速度を指定
-  //velosity_turnが正の値の時，右旋回．負の値のとき，左旋回
-  motorControl('A', velocity_turn);
-  motorControl('C', velocity_turn);
-  motorControl('B', velocity_turn);
-  motorControl('D', velocity_turn);
-}
-
-void motorControl(char omniName, int velocity) {
-  //omniNameでA,B,C,Dのどのオムニのモーターかを，velosityで-1024～1024の範囲の速度を指定
-  uint8_t HbridgeR = 255;
-  uint8_t HbridgeL = 255;
-  uint16_t pwm  = abs(velocity);
-  boolean minus =  (velocity < 0) ? true : false;
-
-  //minus =  !minus;をコメントアウトすることで各モーターの回転方向を反転させる
-  switch (omniName) {
-    case 'A':
-      HbridgeR = omniPin_A1;
-      HbridgeL = omniPin_A2;
-      //minus =  !minus;
+  //駆動系の処理
+  switch (button_drive) {
+    case 1://左旋回
+      //buttonNum = 13;
+      omniTurn(-pwm_turn);
       break;
-    case 'B':
-      HbridgeR = omniPin_B1;
-      HbridgeL = omniPin_B2;
-      //minus =  !minus;
+    case 2://右旋回
+      //buttonNum = 14;
+      omniTurn(pwm_turn);
       break;
-    case 'C':
-      HbridgeR = omniPin_C1;
-      HbridgeL = omniPin_C2;
-      //minus =  !minus;
+    case 3://↑前
+      //buttonNum = 1;
+      omniDrive(0, pwm_drive);
       break;
-    case 'D':
-      HbridgeR = omniPin_D1;
-      HbridgeL = omniPin_D2;
-      //minus =  !minus;
+    case 4://↓後
+      //buttonNum = 2;
+      omniDrive(0, -pwm_drive);
+      break;
+    case 5://→右
+      //buttonNum = 3;
+      omniDrive(pwm_drive, 0);
+      break;
+    case 6://←左
+      //buttonNum = 4;
+      omniDrive(-pwm_drive, 0);
+      break;
+    case 7://↗右斜め上
+      //buttonNum = 5;
+      omniDrive(pwm_drive, pwm_drive);
+      break;
+    case 8://↖左斜め上
+      //buttonNum = 6;
+      omniDrive(-pwm_drive, pwm_drive);
+      break;
+    case 9://➘右斜め下
+      //buttonNum = 7;
+      omniDrive(pwm_drive, -pwm_drive);
+      break;
+    case 10://↙左斜め下
+      //buttonNum = 8;
+      omniDrive(-pwm_drive, -pwm_drive);
       break;
     default:
       break;
   }
 
-  digitalWrite(HbridgeR , LOW);
-  digitalWrite(HbridgeL , LOW);
-
-  if (motorDirection != minus) delay(1); //モーターの回転方向が変わるときには1ms待つ(fetで信号が遅延するため)
-
-  if (minus) {
-    //モーターが逆転する処理(R→L方向への電流)
-    analogWrite(HbridgeR , pwm);
+  //制御系の処理
+  if (button_servo) {
+    //サーボの処理
+    servo.write(servo_end);
   } else {
-    //モーターが正転する処理(L→R方向への電流)
-    analogWrite(HbridgeL , pwm);
+    servo.write(servo_start);
   }
-  motorDirection = minus;
+
+  if (button_gearbox) {
+    //ギヤボックスの処理
+    digitalWrite(gearboxPin, HIGH);
+  }
+}
+
+void readWiFibuffer(byte* button1, byte* button2, byte* button3) {
+  if (UDP.parsePacket() > 0) {
+    byte firstRead = 0;
+    byte secondRead = 0;
+    receiveWiFi(&firstRead, &secondRead);
+    if (firstRead == secondRead) {
+      *button1 = firstRead >> 3; //x
+      *button2 = (firstRead & B00000100) >> 2; //y
+      *button3 = (firstRead & B00000010) >> 1; //z
+    } else {
+      *button1 = 0;
+      *button2 = 0;
+      *button3 = 0;
+    }
+  }
+}
+
+void receiveWiFi(byte* firstRead, byte* secondRead) {
+  byte WiFibuffer[2];
+
+  UDP.read(WiFibuffer, 1);
+  *firstRead = WiFibuffer[0];
+
+  UDP.read(WiFibuffer, 1);
+  *secondRead = WiFibuffer[1] - 128;
+
+  UDP.flush();
+}
+
+void omniDrive(uint16_t velocity_x , uint16_t velocity_y) {
+  //velosity_x, velosity_yで -1024～1024の範囲のx方向, y方向それぞれの速度を指定
+  if (velocity_x < 0 && velocity_x > 1024 && velocity_x < 0 && velocity_x > 1024) {
+    motorControl('A', velocity_y);
+    motorControl('C', velocity_y);
+
+    motorControl('B', velocity_x);
+    motorControl('D', velocity_x);
+  }
+}
+
+void omniTurn(uint16_t velocity_turn) {
+  //velosity_turnで-1024～1024の範囲の速度を指定
+  //velosity_turnが正の値の時，右旋回．負の値のとき，左旋回．
+  if (velocity_turn < 0 && velocity_turn > 1024) {
+    motorControl('A', velocity_turn);
+    motorControl('C', velocity_turn);
+    motorControl('B', velocity_turn);
+    motorControl('D', velocity_turn);
+  }
+}
+
+void motorControl(char omniName, int velocity) {
+  //omniNameでA,B,C,Dのどのオムニのモーターかを，velosityで-1024～1024の範囲の速度を指定
+  if (velocity < 0 && velocity > 1024) {
+    uint8_t HbridgeR = 255;
+    uint8_t HbridgeL = 255;
+    uint16_t pwm  = abs(velocity);
+    boolean minus =  (velocity < 0) ? true : false;
+
+    //minus =  !minus;をコメントアウトすることで各モーターの回転方向を反転させる
+    switch (omniName) {
+      case 'A':
+        HbridgeR = omniPin_A1;
+        HbridgeL = omniPin_A2;
+        //minus =  !minus;
+        break;
+      case 'B':
+        HbridgeR = omniPin_B1;
+        HbridgeL = omniPin_B2;
+        //minus =  !minus;
+        break;
+      case 'C':
+        HbridgeR = omniPin_C1;
+        HbridgeL = omniPin_C2;
+        //minus =  !minus;
+        break;
+      case 'D':
+        HbridgeR = omniPin_D1;
+        HbridgeL = omniPin_D2;
+        //minus =  !minus;
+        break;
+      default:
+        break;
+    }
+
+    digitalWrite(HbridgeR , LOW);
+    digitalWrite(HbridgeL , LOW);
+
+    if (motorDirection != minus) delay(1); //モーターの回転方向が変わるときには1ms待つ(fetで信号が遅延するため)
+
+    if (minus) {
+      //モーターが逆転する処理(R→L方向への電流)
+      analogWrite(HbridgeR , pwm);
+    } else {
+      //モーターが正転する処理(L→R方向への電流)
+      analogWrite(HbridgeL , pwm);
+    }
+    motorDirection = minus;
+  }
 }
