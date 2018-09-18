@@ -7,7 +7,7 @@ const int pin3 = 4;
 const int pin4 = 16;
 const int pin5 = 17;
 const int pin6 = 5;
-const int pin7 = 18;
+//const int pin7 = 18;
 const int pin8 = 19;
 const int pin9 = 21;
 const int pin10 = 22;
@@ -19,9 +19,9 @@ const int pin14 = 27;
 const int pin15 = 26;
 const int pin16 = 25;
 const int pin17 = 33;
-const int pin18 = 32;
-const int pin19 = 35;
-const int pin20 = 34;
+//const int pin18 = 32;
+//const int pin19 = 35;
+//const int pin20 = 34;
 
 
 void setup() {
@@ -31,7 +31,6 @@ void setup() {
   pinMode(pin4, OUTPUT);
   pinMode(pin5, OUTPUT);
   pinMode(pin6, OUTPUT);
-  pinMode(pin7, OUTPUT);
   pinMode(pin8, OUTPUT);
   pinMode(pin9, OUTPUT);
   pinMode(pin10, OUTPUT);
@@ -43,9 +42,6 @@ void setup() {
   pinMode(pin15, OUTPUT);
   pinMode(pin16, OUTPUT);
   pinMode(pin17, OUTPUT);
-  pinMode(pin18, OUTPUT);
-  pinMode(pin19, OUTPUT);
-  pinMode(pin20, OUTPUT);
 }
 
 void loop() {
@@ -55,7 +51,6 @@ void loop() {
   brink(pin4);
   brink(pin5);
   brink(pin6);
-  brink(pin7);
   brink(pin8);
   brink(pin9);
   brink(pin10);
@@ -67,9 +62,6 @@ void loop() {
   brink(pin15);
   brink(pin16);
   brink(pin17);
-  brink(pin18);
-  brink(pin19);
-  brink(pin20);
 }
 
 void brink(int pin) {

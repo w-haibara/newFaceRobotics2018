@@ -1,27 +1,46 @@
-/*the code brink any GPIO pin except IO13, IO15, RX, TX, inputPin(IO34,35,36,37,38,39)
+/*the code fade any GPIO pin except IO13, IO15, RX, TX, inputPin(IO34,35,36,37,38,39)
   and the pins used SDIO Slave(IO6,7,8,9,10,11)
 */
-const int pin1 = 2;
-const int pin2 = 0;
-const int pin3 = 4;
-const int pin4 = 16;
-const int pin5 = 17;
-const int pin6 = 5;
-const int pin7 = 18;
-const int pin8 = 19;
-const int pin9 = 21; //不安なところ　其の一
-const int pin10 = 22;//不安なところ　其の二
-const int pin11 = 23;
+const uint8_t pin1 = 2;
+const uint8_t pin2 = 0;
+const uint8_t pin3 = 4;
+const uint8_t pin4 = 16;
+const uint8_t pin5 = 17;
+const uint8_t pin6 = 5;
+//const uint8_t pin7 = 18;
+const uint8_t pin8 = 19;
+const uint8_t pin9 = 21; //不安なところ　其の一
+const uint8_t pin10 = 22;//不安なところ　其の二
+const uint8_t pin11 = 23;
 
-const int pin12 = 12;
-const int pin13 = 14;
-const int pin14 = 27;
-const int pin15 = 26;//不安なところ　其の三
-const int pin16 = 25;//不安なところ　其の四
-const int pin17 = 33;
-const int pin18 = 32;
-const int pin19 = 35;
-const int pin20 = 34;
+const uint8_t pin12 = 12;
+const uint8_t pin13 = 14;
+const uint8_t pin14 = 27;
+const uint8_t pin15 = 26;//不安なところ　其の三
+const uint8_t pin16 = 25;//不安なところ　其の四
+const uint8_t pin17 = 33;
+//const uint8_t pin18 = 32;
+//const uint8_t pin19 = 35;
+//const uint8_t pin20 = 34;
+
+void fade(uint8_t pin) {
+  uint8_t pwm = 0;
+  const uint8_t ch = 0;
+  const uint8_t delayTime = 2;
+  ledcSetup(0, 490, 8);
+  ledcAttachPin(pin, ch);
+  while (pwm < 254) {
+    ledcWrite(0, pwm);
+    pwm++;
+    delay(delayTime);
+  }
+  while (pwm > 0) {
+    ledcWrite(0, pwm);
+    pwm--;
+    delay(delayTime);
+  }
+  ledcDetachPin(pin);
+}
 
 void setup() {
   pinMode(pin1, OUTPUT);
@@ -30,7 +49,7 @@ void setup() {
   pinMode(pin4, OUTPUT);
   pinMode(pin5, OUTPUT);
   pinMode(pin6, OUTPUT);
-  pinMode(pin7, OUTPUT);
+  //pinMode(pin7, OUTPUT);
   pinMode(pin8, OUTPUT);
   pinMode(pin9, OUTPUT);
   pinMode(pin10, OUTPUT);
@@ -42,39 +61,31 @@ void setup() {
   pinMode(pin15, OUTPUT);
   pinMode(pin16, OUTPUT);
   pinMode(pin17, OUTPUT);
-  pinMode(pin18, OUTPUT);
-  pinMode(pin19, OUTPUT);
-  pinMode(pin20, OUTPUT);
+  //pinMode(pin18, OUTPUT);
+  //pinMode(pin19, OUTPUT);
+  //pinMode(pin20, OUTPUT);
 }
 
 void loop() {
-  brink(pin1);
-  brink(pin2);
-  brink(pin3);
-  brink(pin4);
-  brink(pin5);
-  brink(pin6);
-  brink(pin7);
-  brink(pin8);
-  brink(pin9);
-  brink(pin10);
-  brink(pin11);
+  fade(pin1);
+  fade(pin2);
+  fade(pin3);
+  fade(pin4);
+  fade(pin5);
+  fade(pin6);
+  //fade(pin7);
+  fade(pin8);
+  fade(pin9);
+  fade(pin10);
+  fade(pin11);
 
-  brink(pin12);
-  brink(pin13);
-  brink(pin14);
-  brink(pin15);
-  brink(pin16);
-  brink(pin17);
-  brink(pin18);
-  brink(pin19);
-  brink(pin20);
+  fade(pin12);
+  fade(pin13);
+  fade(pin14);
+  fade(pin15);
+  fade(pin16);
+  fade(pin17);
+  //fade(pin18);
+  //fade(pin19);
+  //fade(pin20);
 }
-
-void brink(int pin) {
-  digitalWrite(pin, HIGH);
-  delay(300);
-  digitalWrite(pin, LOW);
-  delay(300);
-}
-
