@@ -41,8 +41,6 @@ const uint8_t relayPin = 16;
 boolean motorDirection = false;
 
 void setup() {
-  Serial.begin(115200);
-
   WiFi.mode(WIFI_AP);
   WiFi.softAP(ssid, password);
   WiFi.config(myIP, WiFi.gatewayIP(), WiFi.subnetMask());
@@ -63,9 +61,12 @@ void setup() {
 
   pinMode(omniPin_D1, OUTPUT);
   pinMode(omniPin_D2, OUTPUT);
+
+  pinMode(relayPin , OUTPUT);
 }
 
 void loop() {
+  delay(1000);
   delay(10);//WiFiの通信に余裕を持たせるためのdelay
 
   byte  button_drive = 0;
